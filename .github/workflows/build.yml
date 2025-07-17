@@ -1,0 +1,41 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip zlib1g-dev libssl-dev libffi-dev build-essential autoconf libtool pkg-config libbz2-dev libreadline-dev libsqlite3-dev
+        python -m pip install --upgrade pip
+        python -m pip install buildozer
+
+    - name: Build APK with Buildozer
+      run: |
+        buildozer android debug
+      env:
+        ANDROIDSDK: ${{ secrets.ANDROID_SDK }}
+        ANDROIDNDK: ${{ secrets.ANDROID_NDK }}
+        ANDROIDAPI: '31'
+        ANDROIDNDK_API: '21'
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: stopwatch-apk
+        path: bin/*.apk
